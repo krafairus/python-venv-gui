@@ -1,4 +1,4 @@
-# py-venv-gui
+# python-venv-gui
 Administrador de entornos virtuales (venv) de python con interfas grafica.
 
 Nota: tal vez cree un paquete pero solo es un programa que cree por necesidad para ayudarme en mis cosas.
