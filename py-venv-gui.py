@@ -224,7 +224,7 @@ class CreadorEntornos(QMainWindow):
                 if children and isinstance(children[0], QLabel):
                     nombre_entorno = children[0].text()
 
-                    print(f"Nombre del entorno seleccionado: {nombre_entorno}")  # Puedes mantener esta línea para verificar
+                    print(f"Nombre del entorno seleccionado: {nombre_entorno}")
                     ruta_entorno = os.path.join(DIRECTORIO_ENV, nombre_entorno)
 
                     terminal_seleccionado = self.seleccionar_terminal()
@@ -236,7 +236,7 @@ class CreadorEntornos(QMainWindow):
                             temp_script.write(f"source {ruta_entorno}/bin/activate\n")
                             temp_script.write(f"echo Se Cargo El Entorno Virtual: {nombre_entorno}\n")
                             temp_script.write(f"\n")
-                            temp_script.write("bash\n")  # Esto debería mantener la terminal abierta
+                            temp_script.write("bash\n")
 
                         os.chmod(temp_script_path, 0o755)
 
