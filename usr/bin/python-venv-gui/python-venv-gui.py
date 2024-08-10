@@ -270,7 +270,7 @@ class CreadorEntornos(QMainWindow):
 
     def mostrar_acerca_de(self):
         mensaje = (
-            "Python Venv Gui v1.0\n\n"
+            "Python Venv Gui v3.5\n\n"
             "Desarrollado por krafairus\n\n"
             "Más información en:\n"
             "https://github.com/krafairus/py-venv-gui"
