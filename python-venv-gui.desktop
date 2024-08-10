@@ -1,8 +1,0 @@
-[Desktop Entry]
-Name=Entornos Virtuales (py)
-Comment=Crear Entornos Virtuales(venv) De Python.
-Exec=python3 /usr/bin/python-venv-gui/python-venv-gui.py
-Icon=/usr/share/icons/hicolor/scalable/apps/python-venv-gui.svg
-StartupWMClass=python-venv-gui
-Type=Application
-Categories=System;
