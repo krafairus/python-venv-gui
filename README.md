@@ -1,4 +1,4 @@
-# python-venv-gui
+# python-venv-gui - AI
 Administrador de entornos virtuales (venv) de python con interfas grafica.
 Ahora dispobile para Debian 12 - Vanilla os(vso pico)
 
