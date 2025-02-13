@@ -1,5 +1,4 @@
-# python-venv-gui - AI
-Administrador de entornos virtuales (venv) de python con interfas grafica.
-Ahora dispobile para Debian 12 - Vanilla os(vso pico)
+# python-venv-gui
+Programa para la manipulacion de entornos virtuales de forma grafica y simple.
 
-![image](https://github.com/user-attachments/assets/3b647794-6980-42fd-8e99-74ef72f3a5b4)
+![imagen](https://github.com/user-attachments/assets/69058748-b894-4caf-bc60-456a9274592e)
