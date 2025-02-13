@@ -1,4 +1,4 @@
-# python-venv-gui
+# Python Venv Gui - Qt & Python
 Programa para la manipulacion de entornos virtuales de forma grafica y simple.
 No tengo pensando darle un mantenimiento seguido a este programa, 
 Solo lo cree para mi uso personal, Pero lo deje totalmente 
