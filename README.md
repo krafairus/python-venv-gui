@@ -8,6 +8,6 @@ No tengo pensando darle un mantenimiento seguido a este programa,
 Solo lo cree para mi uso personal, Pero lo deje totalmente 
 funcional para cualquiera que lo requiera.
 
-![imagen](https://github.com/user-attachments/assets/69058748-b894-4caf-bc60-456a9274592e)
+<img width="454" height="460" alt="imagen" src="https://github.com/user-attachments/assets/4bad8ad1-74de-42be-b422-d30f5fc7d3b2" />
 
 # Bajo la licencia MIT.
