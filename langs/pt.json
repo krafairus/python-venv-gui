@@ -31,7 +31,7 @@
     "delete_env": "Eliminar ambiente",
     "confirm_delete_env": "Tem certeza de que deseja eliminar o ambiente",
     "about_title": "Sobre Python Venv Gui",
-    "about_content": "Python Venv Gui v1.2.2\n\nDesenvolvido por krafairus\n\nMais informações em:\nhttps://github.com/krafairus/py-venv-gui",
+    "about_content": "Python Venv Gui v1.5.5\n\nDesenvolvido por krafairus\n\nMais informações em:\nhttps://github.com/krafairus/py-venv-gui",
     "close": "Fechar",
     "restart_for_changes": "As alterações de idioma requerem reiniciar a aplicação",
     "terminal_error": "Não foi possível abrir o terminal"
