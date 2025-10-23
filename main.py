@@ -4,6 +4,7 @@ import os
 import sys
 import subprocess
 import json
+import shlex
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QLabel, QLineEdit, QPushButton,
     QListWidget, QListWidgetItem, QWidget, QHBoxLayout,
@@ -94,6 +95,7 @@ terminal_commands = {
 class ConfigDialog(QDialog):
     def __init__(self, parent=None, config=None, strings=None):
         super().__init__(parent)
+        self.parent = parent
         self.config = config
         self.strings = strings
         self.setup_ui()
@@ -168,6 +170,8 @@ class ConfigDialog(QDialog):
             if 'terminales_personalizados' in self.config:
                 if nombre_terminal in self.config['terminales_personalizados']:
                     del self.config['terminales_personalizados'][nombre_terminal]
+                    # Guardar los cambios en la configuración
+                    self.parent.guardar_config()
                     self.actualizar_lista_terminales()
                     QMessageBox.information(self, self.strings["success"], self.strings["terminal_deleted"])
 
@@ -258,8 +262,10 @@ class CreadorEntornos(QMainWindow):
             "delete_env": "Eliminar entorno",
             "confirm_delete_env": "¿Estás seguro de que quieres eliminar el entorno",
             "about_title": "Acerca de Python Venv Gui",
-            "about_content": "Python Venv Gui v1.2.2\n\nDesarrollado por krafairus\n\nMás información en:\nhttps://github.com/krafairus/py-venv-gui",
-            "close": "Cerrar"
+            "about_content": "Python Venv Gui v1.2.0\n\nDesarrollado por krafairus\n\nMás información en:\nhttps://github.com/krafairus/py-venv-gui",
+            "close": "Cerrar",
+            "restart_for_changes": "Los cambios de idioma requieren reiniciar la aplicación",
+            "terminal_error": "No se pudo abrir la terminal"
         }
         
         # Intentar cargar el archivo de idioma
@@ -795,21 +801,39 @@ class CreadorEntornos(QMainWindow):
                             # Construir el comando según la terminal seleccionada
                             comando_final = terminal_seleccionada['comando'].format(script=temp_script_path)
                             
-                            # Si es una terminal personalizada, usar su ruta específica
-                            if terminal_seleccionada['tipo'] in ['sistema', 'personalizado']:
-                                ejecutable = terminal_seleccionada['ruta']
-                            else:
-                                ejecutable = terminal_seleccionada['ruta']
-                            
-                            # Ejecutar el comando
+                            # Usar el método original que funcionaba
                             if terminal_seleccionada['tipo'] == 'sistema':
-                                # Para terminales del sistema, dividir el comando
-                                partes_comando = comando_final.split()
-                                subprocess.Popen(partes_comando)
-                            else:
-                                # Para terminales personalizadas, ejecutar como shell
+                                # Para terminales del sistema, usar el método que funcionaba antes
+                                if terminal_seleccionada['nombre'] == "GNOME Terminal":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '--', 'bash', '-c', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "Deepin Terminal":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-e', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "Konsole (KDE)":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-e', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "XFCE Terminal":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-x', 'bash', '-c', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "Kitty":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], 'bash', '-c', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "Alacritty":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-e', 'bash', '-c', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "Terminator":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-x', 'bash', '-c', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "Tilix":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-e', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "Rxvt":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-e', f'bash --init-file {temp_script_path}'])
+                                elif terminal_seleccionada['nombre'] == "XTerm":
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-e', f'bash --init-file {temp_script_path}'])
+                                else:
+                                    # Método genérico para otras terminales del sistema
+                                    subprocess.Popen([terminal_seleccionada['ruta'], '-e', f'bash --init-file {temp_script_path}'])
+                            elif terminal_seleccionada['tipo'] == 'personalizado':
+                                # Para terminales personalizadas, usar el comando personalizado
                                 subprocess.Popen(['bash', '-c', comando_final])
-                            
+                            else:
+                                # Para "Otro", usar el comando como shell
+                                subprocess.Popen(['bash', '-c', comando_final])
+                                
                         except Exception as e:
                             QMessageBox.critical(self, self.strings["error"], f"{self.strings['terminal_error']}: {str(e)}")
 
