@@ -262,7 +262,7 @@ class CreadorEntornos(QMainWindow):
             "delete_env": "Eliminar entorno",
             "confirm_delete_env": "¿Estás seguro de que quieres eliminar el entorno",
             "about_title": "Acerca de Python Venv Gui",
-            "about_content": "Python Venv Gui v1.2.0\n\nDesarrollado por krafairus\n\nMás información en:\nhttps://github.com/krafairus/py-venv-gui",
+            "about_content": "Python Venv Gui v1.5.5\n\nDesarrollado por krafairus\n\nMás información en:\nhttps://github.com/krafairus/py-venv-gui",
             "close": "Cerrar",
             "restart_for_changes": "Los cambios de idioma requieren reiniciar la aplicación",
             "terminal_error": "No se pudo abrir la terminal"
