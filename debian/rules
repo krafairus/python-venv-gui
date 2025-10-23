@@ -29,8 +29,6 @@ install: build
 	# Add here commands to install the package into python-venv-gui.
 	install -d $(DESTDIR)/usr/bin
 	install -m 755 python-venv-gui $(DESTDIR)/usr/bin
-	install -d $(DESTDIR)/usr/share/python-venv-gui/icons
-	install -m 644 data/icons/*.png $(DESTDIR)/usr/share/python-venv-gui/icons
 	install -d $(DESTDIR)/usr/share/applications
 	install -m 644 data/python-venv-gui.desktop $(DESTDIR)/usr/share/applications/
 	install -d $(DESTDIR)/usr/share/icons/hicolor/scalable/apps
