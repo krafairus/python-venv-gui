@@ -10,7 +10,8 @@ from PySide6.QtWidgets import (
     QApplication, QMainWindow, QVBoxLayout, QLabel, QLineEdit, QPushButton,
     QListWidget, QListWidgetItem, QWidget, QHBoxLayout,
     QMessageBox, QStackedWidget, QToolButton, QInputDialog, QDialog,
-    QComboBox, QDialogButtonBox, QFileDialog, QScrollArea, QSizePolicy
+    QComboBox, QDialogButtonBox, QFileDialog, QScrollArea, QSizePolicy,
+    QTabWidget, QTextEdit
 )
 from PySide6.QtGui import QIcon
 from PySide6.QtCore import Qt, QSize, QTranslator, QCoreApplication, QObject, QDir
@@ -111,6 +112,26 @@ DARK_STYLE = f"""
         background-color: #262626; 
         border-bottom: 1px solid #333333;
     }}
+    QTabWidget::pane {{
+        border: 1px solid {COLOR_BORDER};
+        background-color: {COLOR_BG_SECONDARY};
+    }}
+    QTabBar::tab {{
+        background-color: {COLOR_BG_TERTIARY};
+        color: {COLOR_TEXT};
+        padding: 8px 16px;
+        border: 1px solid {COLOR_BORDER};
+        border-bottom: none;
+        border-top-left-radius: 4px;
+        border-top-right-radius: 4px;
+    }}
+    QTabBar::tab:selected {{
+        background-color: {COLOR_BG_SECONDARY};
+        border-bottom: 1px solid {COLOR_BG_SECONDARY};
+    }}
+    QTabBar::tab:hover {{
+        background-color: {COLOR_BUTTON_HOVER};
+    }}
 """
 
 # --- Rutas y Constantes de Configuración ---
@@ -192,6 +213,189 @@ class TranslationManager(QObject):
         else:
              print(f"Error al cargar traductor en: {qm_path}. Usando idioma fuente.")
              QCoreApplication.removeTranslator(self.translator)
+
+# --- Diálogo de Información del Entorno ---
+
+class EntornoInfoDialog(QDialog):
+    def __init__(self, parent=None, entorno_path="", entorno_name=""):
+        super().__init__(parent)
+        self.entorno_path = entorno_path
+        self.entorno_name = entorno_name
+        self.setWindowTitle(f"Información del Entorno: {entorno_name}")
+        self.setFixedSize(600, 500)
+        self.setup_ui()
+        self.cargar_informacion()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+
+        # Crear widget de pestañas
+        self.tab_widget = QTabWidget()
+        
+        # Pestaña Básica
+        self.basica_tab = QWidget()
+        self.setup_basica_tab()
+        self.tab_widget.addTab(self.basica_tab, "Básica")
+        
+        # Pestaña Librerías
+        self.librerias_tab = QWidget()
+        self.setup_librerias_tab()
+        self.tab_widget.addTab(self.librerias_tab, "Librerías")
+        
+        layout.addWidget(self.tab_widget)
+
+        # Botón de cerrar
+        self.btn_cerrar = QPushButton("Cerrar")
+        self.btn_cerrar.clicked.connect(self.close)
+        layout.addWidget(self.btn_cerrar)
+
+    def setup_basica_tab(self):
+        layout = QVBoxLayout(self.basica_tab)
+        
+        # Área de scroll para la información básica
+        scroll_area = QScrollArea()
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout(scroll_widget)
+        
+        self.info_basica_text = QTextEdit()
+        self.info_basica_text.setReadOnly(True)
+        self.info_basica_text.setStyleSheet("background-color: #2e2e2e; color: white; border: none;")
+        scroll_layout.addWidget(self.info_basica_text)
+        
+        scroll_area.setWidget(scroll_widget)
+        scroll_area.setWidgetResizable(True)
+        layout.addWidget(scroll_area)
+
+    def setup_librerias_tab(self):
+        layout = QVBoxLayout(self.librerias_tab)
+        
+        # Área de scroll para las librerías
+        scroll_area = QScrollArea()
+        scroll_widget = QWidget()
+        scroll_layout = QVBoxLayout(scroll_widget)
+        
+        self.librerias_text = QTextEdit()
+        self.librerias_text.setReadOnly(True)
+        self.librerias_text.setStyleSheet("background-color: #2e2e2e; color: white; border: none;")
+        scroll_layout.addWidget(self.librerias_text)
+        
+        scroll_area.setWidget(scroll_widget)
+        scroll_area.setWidgetResizable(True)
+        layout.addWidget(scroll_area)
+
+    def cargar_informacion(self):
+        self.cargar_info_basica()
+        self.cargar_librerias()
+
+    def cargar_info_basica(self):
+        info_text = f"""Información Básica del Entorno Virtual
+
+Nombre: {self.entorno_name}
+Ruta: {self.entorno_path}
+
+"""
+        # Información del directorio
+        if os.path.exists(self.entorno_path):
+            stat_info = os.stat(self.entorno_path)
+            from datetime import datetime
+            fecha_creacion = datetime.fromtimestamp(stat_info.st_ctime).strftime("%Y-%m-%d %H:%M:%S")
+            fecha_modificacion = datetime.fromtimestamp(stat_info.st_mtime).strftime("%Y-%m-%d %H:%M:%S")
+            
+            info_text += f"""Información del Directorio:
+- Creado: {fecha_creacion}
+- Modificado: {fecha_modificacion}
+- Tamaño: {self.calcular_tamaño_directorio(self.entorno_path)}
+
+"""
+
+        # Información de Python del entorno
+        python_path = self.obtener_python_del_entorno()
+        if python_path and os.path.exists(python_path):
+            try:
+                result = subprocess.run([python_path, '--version'], capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    info_text += f"Versión de Python: {result.stdout.strip()}\n"
+                
+                # Información de la plataforma
+                result = subprocess.run([python_path, '-c', 'import sys; print(f"Plataforma: {sys.platform}")'], 
+                                      capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    info_text += f"{result.stdout.strip()}\n"
+                
+                # Información de implementación
+                result = subprocess.run([python_path, '-c', 'import sys; print(f"Implementación: {sys.implementation.name}")'], 
+                                      capture_output=True, text=True, timeout=5)
+                if result.returncode == 0:
+                    info_text += f"{result.stdout.strip()}\n"
+                    
+            except Exception as e:
+                info_text += f"Error al obtener información de Python: {str(e)}\n"
+
+        self.info_basica_text.setPlainText(info_text)
+
+    def cargar_librerias(self):
+        librerias_text = "Librerias Instaladas\n\n"
+        
+        pip_path = self.obtener_pip_del_entorno()
+        if pip_path and os.path.exists(pip_path):
+            try:
+                result = subprocess.run([pip_path, 'list', '--format=freeze'], capture_output=True, text=True, timeout=10)
+                if result.returncode == 0:
+                    librerias = result.stdout.strip().split('\n')
+                    if librerias and librerias[0]:
+                        for libreria in sorted(librerias):
+                            librerias_text += f"{libreria}\n"
+                    else:
+                        librerias_text += "No se encontraron librerías instaladas.\n"
+                else:
+                    librerias_text += f"Error al obtener la lista de librerías: {result.stderr}\n"
+            except Exception as e:
+                librerias_text += f"Error al ejecutar pip: {str(e)}\n"
+        else:
+            librerias_text += "No se pudo encontrar el ejecutable de pip en el entorno virtual.\n"
+
+        self.librerias_text.setPlainText(librerias_text)
+
+    def obtener_python_del_entorno(self):
+        # Buscar el ejecutable de Python en el entorno virtual
+        posibles_rutas = [
+            os.path.join(self.entorno_path, 'bin', 'python'),
+            os.path.join(self.entorno_path, 'bin', 'python3'),
+            os.path.join(self.entorno_path, 'Scripts', 'python.exe') if sys.platform == 'win32' else ''
+        ]
+        
+        for ruta in posibles_rutas:
+            if os.path.exists(ruta):
+                return ruta
+        return None
+
+    def obtener_pip_del_entorno(self):
+        # Buscar el ejecutable de pip en el entorno virtual
+        posibles_rutas = [
+            os.path.join(self.entorno_path, 'bin', 'pip'),
+            os.path.join(self.entorno_path, 'bin', 'pip3'),
+            os.path.join(self.entorno_path, 'Scripts', 'pip.exe') if sys.platform == 'win32' else ''
+        ]
+        
+        for ruta in posibles_rutas:
+            if os.path.exists(ruta):
+                return ruta
+        return None
+
+    def calcular_tamaño_directorio(self, path):
+        total_size = 0
+        for dirpath, dirnames, filenames in os.walk(path):
+            for filename in filenames:
+                filepath = os.path.join(dirpath, filename)
+                if os.path.exists(filepath):
+                    total_size += os.path.getsize(filepath)
+        
+        # Convertir a formato legible
+        for unit in ['B', 'KB', 'MB', 'GB']:
+            if total_size < 1024.0:
+                return f"{total_size:.1f} {unit}"
+            total_size /= 1024.0
+        return f"{total_size:.1f} TB"
 
 # --- Diálogo para Selección de Python ---
 
@@ -394,7 +598,7 @@ class CustomTerminalDialog(QDialog):
         self.comando = comando
         self.accept()
 
-# --- Diálogo de Configuración (Modificado) ---
+# --- Diálogo de Configuración (Modificado - Eliminada pestaña de Gestión de Entornos) ---
 
 class ConfigDialog(QDialog):
     def __init__(self, parent=None, config=None):
@@ -408,9 +612,33 @@ class ConfigDialog(QDialog):
 
     def setup_ui(self):
         self.setWindowTitle(self.tr("Configuración"))
-        self.setFixedSize(500, 400)
+        self.setFixedSize(600, 500)
 
         layout = QVBoxLayout(self)
+
+        # Crear el widget de pestañas
+        self.tab_widget = QTabWidget()
+        
+        # Pestaña 1: Configuración General
+        self.general_tab = QWidget()
+        self.setup_general_tab()
+        self.tab_widget.addTab(self.general_tab, self.tr("General"))
+        
+        layout.addWidget(self.tab_widget)
+
+        # Solo un botón de Cerrar
+        buttons_layout = QHBoxLayout()
+        buttons_layout.addStretch()
+        
+        self.btn_ok = QPushButton(self.tr("Cerrar"))
+        self.btn_ok.clicked.connect(self.accept_changes) 
+        buttons_layout.addWidget(self.btn_ok)
+        
+        layout.addLayout(buttons_layout)
+
+    def setup_general_tab(self):
+        """Configura la pestaña de configuración general"""
+        layout = QVBoxLayout(self.general_tab)
 
         # 1. Selector de Idioma
         lang_layout = QHBoxLayout()
@@ -459,21 +687,7 @@ class ConfigDialog(QDialog):
         terminals_buttons_layout.addWidget(self.btn_eliminar_terminal)
         layout.addLayout(terminals_buttons_layout)
 
-        # Separador y botones de diálogo
-        layout.addStretch() 
-        
-        buttons_layout = QHBoxLayout()
-        buttons_layout.addStretch()
-        
-        self.btn_cancel = QPushButton(self.tr("Cancelar"))
-        self.btn_cancel.clicked.connect(self.reject)
-        buttons_layout.addWidget(self.btn_cancel)
-        
-        self.btn_ok = QPushButton(self.tr("Aceptar"))
-        self.btn_ok.clicked.connect(self.accept_changes) 
-        buttons_layout.addWidget(self.btn_ok)
-        
-        layout.addLayout(buttons_layout)
+        layout.addStretch()
 
     def browse_env_directory(self):
         dir_path = QFileDialog.getExistingDirectory(
@@ -652,7 +866,6 @@ class CreadorEntornos(QMainWindow):
         
         return self.tr(string_map.get(key, key))
 
-
     def setup_icons(self):
         """Configura las rutas de los íconos"""
         self.icono_app = os.path.join(RESOURCES_DIR, 'icon.svg')
@@ -663,6 +876,7 @@ class CreadorEntornos(QMainWindow):
         self.icono_configuracion = os.path.join(RESOURCES_DIR, 'settings.png')
         self.icono_python = os.path.join(RESOURCES_DIR, 'python.png') 
         self.icono_import_envs = os.path.join(RESOURCES_DIR, 'search.png') 
+        self.icono_info = os.path.join(RESOURCES_DIR, 'info.png')  # Nuevo ícono para información
         
         if os.path.exists(self.icono_app):
             self.setWindowIcon(QIcon(self.icono_app))
@@ -762,15 +976,72 @@ class CreadorEntornos(QMainWindow):
 
     def abrir_configuracion(self):
         dialog = ConfigDialog(self, self.config)
-        dialog.exec()
+        result = dialog.exec()
         
     def abrir_import_dialog(self):
         dialog = ImportEnvDialog(self)
         dialog.exec()
 
+    def mostrar_info_entorno(self):
+        """Muestra la información del entorno seleccionado"""
+        item_actual = self.lista_entornos.currentItem()
+        if item_actual:
+            # Obtener el nombre del entorno del widget personalizado
+            widget = self.lista_entornos.itemWidget(item_actual)
+            if widget:
+                labels = widget.findChildren(QLabel)
+                if labels and len(labels) > 0:
+                    nombre_entorno = labels[0].text()
+                else:
+                    # Fallback: obtener del texto del item
+                    item_text = item_actual.text()
+                    nombre_entorno = item_text.split('\n')[0]
+            else:
+                # Fallback: obtener del texto del item
+                item_text = item_actual.text()
+                nombre_entorno = item_text.split('\n')[0]
+                
+            ruta_entorno = item_actual.data(Qt.UserRole)
+            
+            # Abrir diálogo de información
+            dialog = EntornoInfoDialog(self, ruta_entorno, nombre_entorno)
+            dialog.exec()
+
+    def acortar_ruta(self, ruta_completa, max_caracteres=50):
+        """Acorta una ruta mostrando solo las partes finales si es necesario"""
+        if len(ruta_completa) <= max_caracteres:
+            return ruta_completa
+        
+        # Dividir la ruta en partes
+        partes = ruta_completa.split(os.sep)
+        
+        # Si la ruta es muy larga, mostrar solo las últimas partes
+        if len(partes) > 3:
+            # Tomar las últimas 3 partes y unirlas con "..."
+            partes_finales = partes[-3:]
+            ruta_acortada = "..." + os.sep + os.sep.join(partes_finales)
+            
+            # Si aún es muy larga, acortar más
+            if len(ruta_acortada) > max_caracteres:
+                # Mostrar solo las últimas 2 partes
+                partes_finales = partes[-2:]
+                ruta_acortada = "..." + os.sep + os.sep.join(partes_finales)
+                
+                # Si aún es muy larga, truncar el nombre
+                if len(ruta_acortada) > max_caracteres:
+                    nombre_final = partes[-1]
+                    if len(nombre_final) > max_caracteres - 10:
+                        nombre_final = nombre_final[:max_caracteres - 13] + "..."
+                    ruta_acortada = "..." + os.sep + nombre_final
+        else:
+            # Para rutas con pocas partes, simplemente truncar
+            ruta_acortada = "..." + ruta_completa[-(max_caracteres-3):]
+        
+        return ruta_acortada
+
     def iniciar_ui(self):
         self.setWindowTitle(self.get_string("app_title"))
-        self.resize(400, 400)
+        self.resize(400, 450)  # Aumentado el ancho para mostrar mejor las rutas
 
         self.dragging = False 
         self.setWindowFlags(Qt.FramelessWindowHint)
@@ -794,6 +1065,17 @@ class CreadorEntornos(QMainWindow):
         self.side_bar_layout = QVBoxLayout()
 
         # Botones de la barra lateral
+        self.btn_info = QToolButton(self)
+        if os.path.exists(self.icono_info):
+            self.btn_info.setIcon(QIcon(self.icono_info))
+        else:
+            self.btn_info.setText("ℹ") 
+        self.btn_info.setIconSize(QSize(25, 25))
+        self.btn_info.clicked.connect(self.mostrar_info_entorno)
+        self.btn_info.setToolTip("Información del entorno")
+        self.side_bar_layout.addWidget(self.btn_info)
+        self.btn_info.hide()
+
         self.btn_eliminar = QToolButton(self)
         self.btn_eliminar.setIcon(QIcon(self.icono_eliminar))
         self.btn_eliminar.setIconSize(QSize(25, 25))
@@ -933,21 +1215,25 @@ class CreadorEntornos(QMainWindow):
 
     def update_side_bar_buttons(self):
         if self.lista_entornos.selectedItems():
+            self.btn_info.show()
             self.btn_eliminar.show()
             self.btn_abrir_directorio.show()
             self.btn_iniciar_terminal.show()
         else:
+            self.btn_info.hide()
             self.btn_eliminar.hide()
             self.btn_abrir_directorio.hide()
             self.btn_iniciar_terminal.hide()
 
     def cargar_entornos_desde_registro(self):
+        """Carga los entornos desde el archivo de registro"""
         self.lista_entornos.clear()
         if os.path.exists(ARCHIVO_REGISTRO):
             with open(ARCHIVO_REGISTRO, "r") as log_file:
                 for line in log_file:
                     line = line.strip()
-                    if not line: continue
+                    if not line: 
+                        continue
                     
                     nombre_entorno = ""
                     base_path = ""
@@ -956,25 +1242,70 @@ class CreadorEntornos(QMainWindow):
                         nombre_entorno, base_path = line.split('|', 1)
                         full_path = os.path.join(base_path, nombre_entorno)
                     except ValueError:
+                        # Formato antiguo - convertir al nuevo formato
                         nombre_entorno = line
                         base_path = self.config.get('directorio_base_env', CONFIG_BASE_DIR)
                         full_path = os.path.join(base_path, nombre_entorno)
+                        
+                        # Actualizar el registro al nuevo formato
+                        self.actualizar_registro_a_nuevo_formato()
 
                     if os.path.exists(full_path):
-                        item = QListWidgetItem()
+                        # Crear el item y establecer el texto con la ruta acortada
+                        ruta_acortada = self.acortar_ruta(full_path)
+                        item_text = f"{nombre_entorno}\n{ruta_acortada}"
                         
+                        item = QListWidgetItem(item_text)
+                        item.setData(Qt.UserRole, full_path)
+                        item.setToolTip(full_path)  # Tooltip con la ruta completa
+                        
+                        # Crear widget personalizado
                         custom_widget = QWidget()
-                        custom_layout = QHBoxLayout(custom_widget)
-                        custom_layout.setContentsMargins(0, 0, 0, 0)
+                        custom_layout = QVBoxLayout(custom_widget)
+                        custom_layout.setContentsMargins(5, 5, 5, 5)
+                        custom_layout.setSpacing(2)
                         
                         entorno_label = QLabel(nombre_entorno)
-                        custom_layout.addWidget(entorno_label)
+                        entorno_label.setStyleSheet("font-weight: bold;")
                         
-                        item.setData(Qt.UserRole, full_path) 
-                        item.setText(nombre_entorno) 
+                        ruta_label = QLabel(ruta_acortada)
+                        ruta_label.setStyleSheet("font-size: 9pt; color: #BEBEBE;")
+                        
+                        custom_layout.addWidget(entorno_label)
+                        custom_layout.addWidget(ruta_label)
                         
                         self.lista_entornos.addItem(item)
                         self.lista_entornos.setItemWidget(item, custom_widget)
+
+    def actualizar_registro_a_nuevo_formato(self):
+        """Actualiza el archivo de registro del formato antiguo al nuevo formato"""
+        if os.path.exists(ARCHIVO_REGISTRO):
+            with open(ARCHIVO_REGISTRO, "r") as f:
+                lineas = f.readlines()
+            
+            # Verificar si hay líneas en formato antiguo
+            lineas_actualizadas = []
+            formato_antiguo_encontrado = False
+            
+            for linea in lineas:
+                linea = linea.strip()
+                if not linea:
+                    continue
+                
+                # Si la línea no contiene '|', está en formato antiguo
+                if '|' not in linea:
+                    formato_antiguo_encontrado = True
+                    # Convertir al nuevo formato
+                    nueva_linea = f"{linea}|{self.config.get('directorio_base_env', CONFIG_BASE_DIR)}"
+                    lineas_actualizadas.append(nueva_linea + "\n")
+                else:
+                    lineas_actualizadas.append(linea + "\n")
+            
+            # Si se encontró formato antiguo, actualizar el archivo
+            if formato_antiguo_encontrado:
+                with open(ARCHIVO_REGISTRO, "w") as f:
+                    f.writelines(lineas_actualizadas)
+                print("Registro actualizado al nuevo formato")
 
     def crear_entorno(self):
         nombre_entorno = self.entrada_nombre_entorno.text()
@@ -998,18 +1329,33 @@ class CreadorEntornos(QMainWindow):
         try:
             subprocess.run(comando, capture_output=True, text=True, check=True)
             
+            # Usar siempre el nuevo formato
             with open(ARCHIVO_REGISTRO, "a") as log_file:
                 log_file.write(f"{nombre_entorno}|{base_dir}\n")
 
-            custom_widget = QWidget()
-            custom_layout = QHBoxLayout(custom_widget)
-            custom_layout.setContentsMargins(0, 0, 0, 0)
-            entorno_label = QLabel(nombre_entorno)
-            custom_layout.addWidget(entorno_label)
-
-            item = QListWidgetItem()
+            # Crear el item y establecer el texto con la ruta acortada
+            ruta_acortada = self.acortar_ruta(ruta_entorno)
+            item_text = f"{nombre_entorno}\n{ruta_acortada}"
+            
+            item = QListWidgetItem(item_text)
             item.setData(Qt.UserRole, ruta_entorno)
-            item.setText(nombre_entorno) 
+            item.setToolTip(ruta_entorno)  # Tooltip con la ruta completa
+            
+            # Crear widget personalizado
+            custom_widget = QWidget()
+            custom_layout = QVBoxLayout(custom_widget)
+            custom_layout.setContentsMargins(5, 5, 5, 5)
+            custom_layout.setSpacing(2)
+            
+            entorno_label = QLabel(nombre_entorno)
+            entorno_label.setStyleSheet("font-weight: bold;")
+            
+            ruta_label = QLabel(ruta_acortada)
+            ruta_label.setStyleSheet("font-size: 9pt; color: #BEBEBE;")
+            
+            custom_layout.addWidget(entorno_label)
+            custom_layout.addWidget(ruta_label)
+            
             self.lista_entornos.addItem(item)
             self.lista_entornos.setItemWidget(item, custom_widget)
             
@@ -1028,7 +1374,21 @@ class CreadorEntornos(QMainWindow):
     def eliminar_entorno(self):
         item_actual = self.lista_entornos.currentItem()
         if item_actual:
-            nombre_entorno = item_actual.text()
+            # Obtener el nombre del entorno del widget personalizado
+            widget = self.lista_entornos.itemWidget(item_actual)
+            if widget:
+                labels = widget.findChildren(QLabel)
+                if labels and len(labels) > 0:
+                    nombre_entorno = labels[0].text()
+                else:
+                    # Fallback: obtener del texto del item
+                    item_text = item_actual.text()
+                    nombre_entorno = item_text.split('\n')[0]
+            else:
+                # Fallback: obtener del texto del item
+                item_text = item_actual.text()
+                nombre_entorno = item_text.split('\n')[0]
+                
             ruta_entorno = item_actual.data(Qt.UserRole)
             base_path = os.path.dirname(ruta_entorno)
 
@@ -1045,7 +1405,7 @@ class CreadorEntornos(QMainWindow):
                         
                         with open(ARCHIVO_REGISTRO, "w") as log_file:
                             for linea in lineas:
-                                if linea.strip() != nombre_entorno and linea != line_to_remove: 
+                                if linea.strip() != line_to_remove.strip(): 
                                     log_file.write(linea)
 
                     row = self.lista_entornos.row(item_actual)
@@ -1064,7 +1424,21 @@ class CreadorEntornos(QMainWindow):
     def iniciar_entorno_terminal(self):
         item_actual = self.lista_entornos.currentItem()
         if item_actual:
-            nombre_entorno = item_actual.text()
+            # Obtener el nombre del entorno del widget personalizado
+            widget = self.lista_entornos.itemWidget(item_actual)
+            if widget:
+                labels = widget.findChildren(QLabel)
+                if labels and len(labels) > 0:
+                    nombre_entorno = labels[0].text()
+                else:
+                    # Fallback: obtener del texto del item
+                    item_text = item_actual.text()
+                    nombre_entorno = item_text.split('\n')[0]
+            else:
+                # Fallback: obtener del texto del item
+                item_text = item_actual.text()
+                nombre_entorno = item_text.split('\n')[0]
+                
             ruta_entorno = item_actual.data(Qt.UserRole)
 
             terminal_seleccionada = self.seleccionar_terminal()
@@ -1130,6 +1504,7 @@ class CreadorEntornos(QMainWindow):
                         nombre, base_path = line.split('|', 1)
                         registered_paths.add(os.path.join(base_path, nombre))
                     except ValueError:
+                        # Formato antiguo
                         registered_paths.add(os.path.join(self.config.get('directorio_base_env', CONFIG_BASE_DIR), line))
 
         found_new_envs = []
@@ -1147,9 +1522,13 @@ class CreadorEntornos(QMainWindow):
             QMessageBox.information(self, self.get_string("success"), self.get_string("no_new_envs_found"))
             return
 
+        # Usar siempre el nuevo formato al guardar
         with open(ARCHIVO_REGISTRO, "a") as log_file:
             for env_name, base_path in found_new_envs:
                 log_file.write(f"{env_name}|{base_path}\n")
+        
+        # Actualizar el registro a nuevo formato si es necesario
+        self.actualizar_registro_a_nuevo_formato()
         
         self.lista_entornos.clear()
         self.cargar_entornos_desde_registro()
