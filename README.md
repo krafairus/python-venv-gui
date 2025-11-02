@@ -20,6 +20,6 @@ Añadir entradas de terminales personalizadas si no existe una de las opciones d
 Soporte para Debian 12/Deepin linux 25 y Distribuciones basadas en Arch Linux(depende del glibc que tenga al compilarse.).
 
 
-<img width="454" height="460" alt="imagen" src="https://github.com/user-attachments/assets/4bad8ad1-74de-42be-b422-d30f5fc7d3b2" />
+<img width="469" height="511" alt="imagen" src="https://github.com/user-attachments/assets/44e3c0ca-f4cd-44ca-8de7-7ba2913eaa6b" />
 
 # Bajo la licencia MIT.
